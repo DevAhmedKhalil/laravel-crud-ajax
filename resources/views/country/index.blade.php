@@ -34,7 +34,19 @@
                         <h5>World Countries</h5>
                     </div>
                     <div class="card-body">
-                        ...
+                        <div class="table-responsive">
+                            <table class="table table-hover table-condensed table-sm" id="countries">
+                                <thead>
+                                    <tr>
+                                        <th>Country Name</th>
+                                        <th>Capital City</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -107,9 +119,10 @@
                 },
                 success: function(data) {
                     if (data.status == 1) {
+                        toastr.success(data.message);
                         $(form).find('button').text('Submit');
                         $(form).trigger('reset');
-                        toastr.success(data.message);
+                        table.ajax.reload(null, false);
                     }
                 },
                 error: function(data) {
@@ -120,10 +133,53 @@
                     });
 
                     toastr.error(data.message);
-                }
+                },
+                error: function(xhr) {
+                    $(form).find('button').text('Submit');
 
+                    if (xhr.status === 422) {
+                        // Validation errors
+                        $.each(xhr.responseJSON.errors, function(prefix, value) {
+                            $(form).find('span.' + prefix + '_error').text(value[0]);
+                        });
+                    } else {
+                        // Any other error
+                        toastr.error(xhr.responseJSON.message ?? 'Something went wrong');
+                    }
+                }
             })
         })
+
+        // Display Saved Country
+        let table = $('#countries').DataTable({
+            processing: true,
+            info: true,
+            serverSide: true,
+            responsive: true,
+            autoWidth: false,
+            pageLength: 5,
+            lengthMenu: [
+                [5, 10, 25, 50, -1],
+                [5, 10, 25, 50, "All"]
+            ],
+            ajax: {
+                url: "{{ route('country.getCountries') }}",
+                type: 'GET',
+            },
+            columns: [{
+                    data: 'country_name',
+                    name: 'country_name'
+                },
+                {
+                    data: 'capital_city',
+                    name: 'capital_city'
+                },
+                {
+                    data: 'actions',
+                    name: 'actions'
+                },
+            ],
+        });
     </script>
 </body>
 
