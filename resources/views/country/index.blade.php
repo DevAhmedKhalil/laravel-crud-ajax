@@ -20,22 +20,22 @@
 
 <body>
 
-    <div class="container">
+    <div @class(['container'])>
 
-        <div class="text-center mt-3">
+        <div @class(['text-center', 'mt-3'])>
             <h2>World Countries</h2>
             <hr>
         </div>
 
-        <div class="row" style="margin-top: 45px">
-            <div class="col-md-8">
-                <div class="card shadow mb-3">
-                    <div class="card-header">
+        <div @class(['row']) style="margin-top: 45px">
+            <div @class(['col-md-8'])>
+                <div @class(['card', 'shadow', 'mb-3'])>
+                    <div @class(['card-header'])>
                         <h5>World Countries</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-condensed table-sm" id="countries">
+                    <div @class(['card-body'])>
+                        <div @class(['table-responsive'])>
+                            <table @class(['table', 'table-hover', 'table-condensed', 'table-sm']) id="countries">
                                 <thead>
                                     <tr>
                                         <th>Country Name</th>
@@ -50,30 +50,30 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card shadow mb-3">
-                    <div class="card-header">
-                        <h5 class="card-title">
+            <div @class(['col-md-4'])>
+                <div @class(['card', 'shadow', 'mb-3'])>
+                    <div @class(['card-header'])>
+                        <h5 @class(['card-title'])>
                             Country Form
                         </h5>
                     </div>
-                    <div class="card-body">
+                    <div @class(['card-body'])>
                         <form action="{{ route('country.store') }}" method="POST" id="store_country_form">
                             @csrf
-                            <div class="mb-3">
-                                <label for="country_name" class="form-label">Country Name</label>
-                                <input type="text" name="country_name" id="country_name" class="form-control"
-                                    placeholder="Enter country name">
-                                <span class="text-danger error-text country_name_error"></span>
+                            <div @class(['mb-3'])>
+                                <label for="country_name" @class(['form-label'])>Country Name</label>
+                                <input type="text" name="country_name" id="country_name"
+                                    @class(['form-control']) placeholder="Enter country name">
+                                <span @class(['text-danger', 'error-text', 'country_name_error'])></span>
                             </div>
-                            <div class="mb-3">
-                                <label for="capital_city" class="form-label">Capital Name</label>
-                                <input type="text" name="capital_city" id="capital_city" class="form-control"
-                                    placeholder="Enter capital city">
-                                <span class="text-danger error-text capital_city_error"></span>
+                            <div @class(['mb-3'])>
+                                <label for="capital_city" @class(['form-label'])>Capital Name</label>
+                                <input type="text" name="capital_city" id="capital_city"
+                                    @class(['form-control']) placeholder="Enter capital city">
+                                <span @class(['text-danger', 'error-text', 'capital_city_error'])></span>
                             </div>
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-primary">Submit</button>
+                            <div @class(['form-group'])>
+                                <button type="submit" @class(['btn', 'btn-primary'])>Submit</button>
                             </div>
                         </form>
                     </div>
@@ -82,9 +82,7 @@
         </div>
     </div>
 
-
-
-
+    @include('modal-form')
 
     <script src="{{ asset('jquery/jquery-3.7.1.min.js') }}"></script>
     <script src="{{ asset('bootstrap/js/bootstrap.min.js') }}"></script>
@@ -179,6 +177,58 @@
                     name: 'actions'
                 },
             ],
+        });
+
+        // Edit Selected Country (Using Event Delegation and [on vs click func]) this is better with button will load in the future
+        $(document).on('click', '.edit-country-btn', function() {
+            let id = $(this).data('id');
+            let modal = $('#modal-form');
+
+            $.get("{{ route('country.getCountry') }}", {
+                id: id
+            }, function(res) {
+                modal.find('input[name="country_id"]').val(res.data.id);
+                modal.find('#country_name').val(res.data.country_name);
+                modal.find('#capital_city').val(res.data.capital_city);
+                modal.modal('show'); // 👈 هنا بقى هيظهر
+            });
+        });
+
+
+        // Update Selected Country
+        $('#update_country_form').on('submit', function(e) {
+            e.preventDefault();
+
+            let form = this;
+            let formData = new FormData(form);
+
+            $.ajax({
+                url: $(form).attr('action'),
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                beforeSend: function() {
+                    $(form).find('span.error-text').text('');
+                },
+                success: function(data) {
+                    if (data.status) {
+                        toastr.success(data.message);
+                        $('#modal-form').modal('hide');
+                        table.ajax.reload(null, false);
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        $.each(xhr.responseJSON.errors, function(prefix, value) {
+                            $(form).find('span.' + prefix + '_error').text(value[0]);
+                        });
+                    } else {
+                        toastr.error(xhr.responseJSON.message ?? 'Something went wrong');
+                    }
+                }
+            });
         });
     </script>
 </body>
