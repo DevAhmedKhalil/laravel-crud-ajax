@@ -184,19 +184,16 @@
             let id = $(this).data('id');
             let modal = $('#modal-form');
 
-            $.get("{{ route('country.getCountry') }}", {
-                id: id
-            }, function(res) {
+            $.get("{{ route('country.getCountry') }}", {id: id}, function(res) {
                 modal.find('input[name="country_id"]').val(res.data.id);
                 modal.find('#country_name').val(res.data.country_name);
                 modal.find('#capital_city').val(res.data.capital_city);
-                modal.modal('show'); // 👈 هنا بقى هيظهر
+                modal.modal('show');
             });
         });
 
-
         // Update Selected Country
-        $('#update_country_form').on('submit', function(e) {
+        $('form#update_country_form').on('submit', function(e) {
             e.preventDefault();
 
             let form = this;
@@ -204,7 +201,7 @@
 
             $.ajax({
                 url: $(form).attr('action'),
-                method: 'POST',
+                method: $(form).attr('method'),
                 data: formData,
                 processData: false,
                 contentType: false,
@@ -230,6 +227,41 @@
                 }
             });
         });
+
+        // Delete selected country from the list
+        $(document).on('click', 'button#deleteCountryBtn', function() {
+            let id = $(this).data('id');
+            let url = "{{ route('country.deleteCountry') }}";
+
+            Swal.fire({
+                title: "Are you sure you want to delete this country?",
+                html: 'You want to delete selected country.',
+                showCancelButton: true,
+                showCloseButton: true,
+                cancelButtonText: 'Cancel',
+                confirmButtonText: 'Yes, delete it!',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                width: 300,
+                allowOutsideClick: false,
+            }).then(function (res) {
+
+                if (res.value) {
+                    $.post(url, { id: id }, function(res) {
+
+                        if (res.status) {
+                            table.ajax.reload(null, false);
+                            toastr.success(res.message);
+                        } else {
+                            toastr.error(res.message);
+                        }
+
+                    }, 'json');
+                }
+            });
+        });
+
+
     </script>
 </body>
 

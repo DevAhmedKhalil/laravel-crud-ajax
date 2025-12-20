@@ -58,26 +58,27 @@ class CountryController extends Controller
     public function getCountries(Request $request)
     {
         if ($request->ajax()) {
-            $data = Country::select(['id', 'country_name', 'capital_city'])->orderBy('country_name', 'asc');
+            $data = Country::select(['id', 'country_name', 'capital_city'])->orderBy('created_at', 'DESC');
 
             return DataTables::of($data)->addColumn('actions', function ($row) {
-                return '<div class="btn-group">
+                return ('<div class="btn-group">
                         <button
                             type="button"
                             class="btn btn-primary btn-sm edit-country-btn"
-                            data-id="'.$row->id.'">
+                            data-id="'.$row->id.'"
+                            id="editCountryBtn">
                             Edit
                         </button>
 
                         <button
                             type="button"
                             class="btn btn-danger btn-sm delete-country-btn"
-                            data-id="'.$row->id.'">
+                            data-id="'.$row->id.'"
+                            id="deleteCountryBtn">
                             Delete
                         </button>
-                        </div>';
-            })
-                ->rawColumns(['actions'])->make(true);
+                        </div>');
+            })->rawColumns(['actions'])->make(true);
         }
     }
 
@@ -101,23 +102,41 @@ class CountryController extends Controller
             'capital_city.required' => 'Please enter capital city',
         ]);
 
-        try {
-            $country = Country::findOrFail($request->country_id);
+        // Update country info
+        $country = Country::findOrFail($request->country_id);
+        $country->country_name = $request->country_name;
+        $country->capital_city = $request->capital_city;
 
-            $country->update([
-                'country_name' => $request->country_name,
-                'capital_city' => $request->capital_city,
-            ]);
+        $save = $country->save();
 
+        if ($save) {
             return response()->json([
                 'status' => true,
                 'message' => 'Country updated successfully',
             ]);
-        } catch (\Throwable $e) {
+        }else{
             return response()->json([
                 'status' => false,
-                'message' => 'Update failed',
-            ], 500);
+                'message' => 'Country not updated',
+            ]);
         }
     }
+
+    public function deleteCountry(Request $request)
+    {
+        $country = Country::find($request->id);
+
+        if ($country->delete()) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Country deleted successfully',
+            ]);
+        }
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Country not deleted',
+        ], 500);
+    }
+
 }

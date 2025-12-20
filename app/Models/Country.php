@@ -8,4 +8,8 @@ class Country extends Model
 {
     // mass assign attributes
     protected $fillable = ['country_name', 'capital_city'];
+
+    public static function findOrFail(mixed $country_id)
+    {
+    }
 }
