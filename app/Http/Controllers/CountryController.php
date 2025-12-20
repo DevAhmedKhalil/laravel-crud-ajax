@@ -60,12 +60,13 @@ class CountryController extends Controller
         if ($request->ajax()) {
             $data = Country::select(['id', 'country_name', 'capital_city'])->orderBy('created_at', 'DESC');
 
-            return DataTables::of($data)->addColumn('actions', function ($row) {
-                return ('<div class="btn-group">
+            return DataTables::of($data)
+                ->addColumn('actions', function ($row) {
+                    return ('<div class="btn-group">
                         <button
                             type="button"
                             class="btn btn-primary btn-sm edit-country-btn"
-                            data-id="'.$row->id.'"
+                            data-id="' . $row->id . '"
                             id="editCountryBtn">
                             Edit
                         </button>
@@ -73,12 +74,17 @@ class CountryController extends Controller
                         <button
                             type="button"
                             class="btn btn-danger btn-sm delete-country-btn"
-                            data-id="'.$row->id.'"
+                            data-id="' . $row->id . '"
                             id="deleteCountryBtn">
                             Delete
                         </button>
                         </div>');
-            })->rawColumns(['actions'])->make(true);
+                })
+                ->addColumn('checkbox', function ($row) {
+                    return '<input type="checkbox" name="country_checkbox" data-id="' . $row['id'] . '" ">';
+                })
+                ->rawColumns(['actions', 'checkbox'])
+                ->make(true);
         }
     }
 
@@ -94,7 +100,7 @@ class CountryController extends Controller
     {
         $request->validate([
             'country_id' => 'required|exists:countries,id',
-            'country_name' => 'required|unique:countries,country_name,'.$request->country_id,
+            'country_name' => 'required|unique:countries,country_name,' . $request->country_id,
             'capital_city' => 'required',
         ], [
             'country_name.required' => 'Please enter country name',
@@ -114,7 +120,7 @@ class CountryController extends Controller
                 'status' => true,
                 'message' => 'Country updated successfully',
             ]);
-        }else{
+        } else {
             return response()->json([
                 'status' => false,
                 'message' => 'Country not updated',
@@ -137,6 +143,24 @@ class CountryController extends Controller
             'status' => false,
             'message' => 'Country not deleted',
         ], 500);
+    }
+
+    public function deleteMultipleCountry(Request $request)
+    {
+        $ids = $request->countries_ids;
+        $deleted_countries = Country::whereIn('id', $ids)->delete();
+
+        if ($deleted_countries) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Some countries has been deleted successfully',
+            ]);
+        }
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Something went wrong',
+        ]);
     }
 
 }
