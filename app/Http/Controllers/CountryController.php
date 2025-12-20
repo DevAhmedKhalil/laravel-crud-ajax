@@ -91,7 +91,7 @@ class CountryController extends Controller
     public function getCountry(Request $request)
     {
         $country_id = $request->id;
-        $country = Country::findOrFail($country_id);
+        $country = Country::find($country_id);
 
         return response()->json(['data' => $country]);
     }
@@ -109,7 +109,7 @@ class CountryController extends Controller
         ]);
 
         // Update country info
-        $country = Country::findOrFail($request->country_id);
+        $country = Country::find($request->country_id);
         $country->country_name = $request->country_name;
         $country->capital_city = $request->capital_city;
 
